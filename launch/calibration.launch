@@ -1,0 +1,10 @@
+<launch>
+    <param name="package_path" value="$(find lidar_lidar_cal)"/>
+    <!-- <rosparam file="$(find lidar_lidar_cal)/config/ros-node-config.yaml" command="load"/>
+    <rosparam file="$(find lidar_lidar_cal)/config/setup-caliboard.yaml" command="load"/> -->
+
+    <node pkg="lidar_lidar_cal" type="calibration_node" name="calibration_node" output="screen"/>
+
+    <!-- <node name="rviz" pkg="rviz" type="rviz" args="-d $(find lidar_lidar_cal)/rviz/fusion.rviz" output="screen"/> -->
+    
+</launch>

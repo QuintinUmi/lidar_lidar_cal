@@ -1,0 +1,17 @@
+Translation (X Y Z):
+0.016496 0.765732 -0.195135
+
+Rotation in radians (Z Y X):
+3.132075 0.000763 0.382597
+
+Rotation in angles (Z Y X):
+179.454681 0.043693 21.921193
+
+4x4 Transformation Matrix:
+-0.999954 -0.009128  0.002800  0.016496
+ 0.009517 -0.929508  0.368678  0.765732
+-0.000763  0.368688  0.929553 -0.195135
+ 0.000000  0.000000  0.000000  1.000000
+
+Static Transform Publisher Command:
+rosrun tf static_transform_publisher 0.016496 0.765732 -0.195135 0.377597 0.000763 3.132075 /map /lidar_frame 10
