@@ -20,6 +20,7 @@
 #include <vector>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <ctime>
 
 class LiDARCalibration
 {
@@ -73,7 +74,6 @@ public:
         pub_transformed_points_.publish(transformed_msg);
     }
 
-    // 执行标定
     void performCalibration()
     {
         if (cloud_target_->empty() || cloud_source_->empty())
@@ -128,12 +128,12 @@ public:
         double mean_residual = total_residual / residuals.size();
         ROS_INFO("Mean Residual Error: %f meters", mean_residual);
 
-        // 保存残差数据
-        saveResiduals(residuals);
-
-        // 保存标定结果
-        transformation_ = ndt.getFinalTransformation();
+        // 保存标定结果（每次覆盖 calibration_result.txt）
         saveTransformation(transformation_);
+
+        // 保存残差数据（生成带时间戳的新文件）
+        std::string residuals_file = generateTimestampedFilename("residuals", ".txt");
+        saveResiduals(residuals, residuals_file);
     }
 
     void saveTransformation(const Eigen::Matrix4f &transformation)
@@ -219,12 +219,12 @@ public:
         return residuals;
     }
 
-    void saveResiduals(const std::vector<double> &residuals)
+    void saveResiduals(const std::vector<double> &residuals, const std::string &file_name)
     {
         // 获取包路径并设置 result 文件夹路径
         std::string package_path = ros::package::getPath("lidar_lidar_cal");
         std::string result_dir = package_path + "/result/";
-        std::string file_path = result_dir + "residuals.txt";
+        std::string file_path = result_dir + file_name;
 
         // 确保 result 目录存在
         struct stat info;
@@ -236,7 +236,7 @@ public:
         std::ofstream outfile(file_path, std::ios::out);
         if (!outfile.is_open())
         {
-            ROS_ERROR("Failed to open residuals.txt for writing. PATH: ");
+            ROS_ERROR("Failed to open residuals file for writing. PATH: ");
             std::cout << file_path << std::endl;
             return;
         }
@@ -251,8 +251,7 @@ public:
         // 关闭文件
         outfile.close();
 
-        ROS_INFO("Residuals saved to residuals.txt. PATH: ");
-        std::cout << file_path << std::endl;
+        ROS_INFO("Residuals saved to %s", file_path.c_str());
     }
 
     bool kbhit()
@@ -295,17 +294,29 @@ private:
 
     Eigen::Matrix4f transformation_ = Eigen::Matrix4f::Identity(); // 初始外参矩阵
 
+    // 生成带时间戳的文件名
+    std::string generateTimestampedFilename(const std::string &base_name, const std::string &extension)
+    {
+        // 获取当前时间
+        std::time_t now = std::time(nullptr);
+        char buffer[80];
+        std::strftime(buffer, sizeof(buffer), "%Y%m%d_%H%M%S", std::localtime(&now));
+
+        // 拼接文件名
+        return base_name + "_" + buffer + extension;
+    }
+
     void initializeTransformation()
     {
         // 设置平移部分
-        transformation_(0, 3) = 0.016496;  // X 平移 0.01
-        transformation_(1, 3) = 0.765732;  // Y 平移 0.73
-        transformation_(2, 3) = -0.195135;  // Z 平移 -0.2
+        transformation_(0, 3) = 0.016920;  // X 平移 0.01
+        transformation_(1, 3) = 0.761223;  // Y 平移 0.73
+        transformation_(2, 3) = -0.195695;  // Z 平移 -0.2
 
         // 设置旋转部分（ZYX 欧拉角转旋转矩阵）
-        double yaw = 3.132075;     // Yaw (绕 Z 轴) 3.13159
-        double pitch = 0.000763;       // Pitch (绕 Y 轴) 0.0
-        double roll = 0.382597;    // Roll (绕 X 轴) 0.37991
+        double yaw = 3.131114;     // Yaw (绕 Z 轴) 3.13159
+        double pitch = 0.000149;       // Pitch (绕 Y 轴) 0.0
+        double roll = 0.377767;    // Roll (绕 X 轴) 0.37991
 
         Eigen::Matrix3f rotation_matrix;
         rotation_matrix = Eigen::AngleAxisf(yaw, Eigen::Vector3f::UnitZ()) *   // Yaw (Z)
